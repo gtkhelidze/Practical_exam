@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="ka">
+<head>
+  <meta charset="UTF-8" />
+  <title>Admin • ყველა შედეგი (Google Sheet • live)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    /* Theme: practical_exam.html match (dark navy) */
+    body { font-family: "Segoe UI", system-ui, -apple-system, sans-serif; margin: 0; background:#0f172a; color:#e2e8f0; }
+    .wrap { max-width: 1100px; margin: 40px auto; padding: 0 16px; }
+    h1 { font-size: 26px; color:#f8fafc; margin: 0 0 12px; }
+    .card { background:#111827; border:1px solid #1f2937; border-radius:14px; padding:18px; margin:16px 0; }
+
+    .row { display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end; }
+    label.small { font-size:12px; color:#94a3b8; display:block; margin-bottom:6px; }
+
+    input[type="password"], input[type="text"], select {
+      padding:10px 12px; border-radius:10px; border:1px solid #1f2937; background:#0b1220; color:#e2e8f0; outline:none;
+    }
+    button {
+      cursor:pointer; border:none; border-radius:12px; padding:10px 14px; font-weight:600;
+      background:#2563eb; color:white; transition: transform .05s ease, opacity .2s;
+    }
+    button:hover { opacity:.95; }
+    button:active { transform: translateY(1px); }
+
+    .err { color:#fca5a5; font-size:13px; margin-top:8px; display:none; }
+    .muted { font-size:12px; color:#94a3b8; }
+
+    table { width:100%; border-collapse: collapse; }
+    th, td { border-bottom:1px solid #1f2937; padding:10px; text-align:left; }
+    th { color:#cbd5e1; font-weight:600; background:#0b1324; position:sticky; top:0; z-index:1; }
+
+    /* small helpers */
+    .tools { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+    .grow { flex: 1 1 auto; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Admin • ყველა შედეგი (Google Sheet • live)</h1>
+
+    <!-- Login -->
+    <div class="card">
+      <div class="row">
+        <div>
+          <label class="small">პაროლი</label>
+          <input type="password" id="pwd" placeholder="შეიყვანეთ admin პაროლი" />
+        </div>
+        <button id="enterBtn">შესვლა</button>
+      </div>
+      <div id="err" class="err">პაროლი არასწორია.</div>
+      <!-- ნაგულისხმევი პაროლი UI-ზე არ ჩანს -->
+    </div>
+
+    <!-- Results -->
+    <div id="resultBlock" class="card" style="display:none;">
+      <div class="tools" style="justify-content: space-between;">
+      <div class="muted">სია: უახლესი პირველზე • ძებნა მუშაობს broker/trader/date/საპასუხო ველებზე.</div>
+        <div class="tools">
+          <input type="text" id="searchBox" placeholder="ძებნა: სახელი/გვარი, საბროკერო, თარიღი, პასუხი…" style="width:260px;" />
+          <select id="limitSelect" title="რაოდენობა საჩვენებლად">
+            <option value="50">50</option>
+            <option value="100" selected>100</option>
+            <option value="200">200</option>
+            <option value="all">ALL</option>
+          </select>
+          <button id="refreshBtn" title="განახლება">განახლება</button>
+        </div>
+      </div>
+
+      <div style="overflow:auto; margin-top:10px;">
+        <table id="tbl">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Brokerage Firms</th>
+              <th>Trader</th>
+              <th>Date</th>
+              <th>კ1</th>
+              <th>კ2</th>
+              <th>კ3</th>
+              <th>კ4</th>
+              <th>კ5</th>
+              <th>Timestamp</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+      <div class="muted" style="margin-top:8px;">
+        წყარო: Google Sheet (live). დალაგება: უახლესი პირველზე. თარიღის ფორმატი შენარჩუნებულია (date = YYYY-MM-DD, timestamp = 24სთ Tbilisi).
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ====== CONFIG ======
+    const ENTER_PWD = 'admin123';
+    const LIST_URL  = "https://script.google.com/macros/s/AKfycbxD8krfclWXbBT4NhcB-SZ-8PDeuy9FFphc-KDJ0bTbOyEHkcglS4i0X6lRzpm5kWeD/exec?mode=list";
+
+    // ====== DOM ======
+    const pwdInput    = document.getElementById('pwd');
+    const enterBtn    = document.getElementById('enterBtn');
+    const err         = document.getElementById('err');
+    const resultBlock = document.getElementById('resultBlock');
+    const tbody       = document.getElementById('tbody');
+    const refreshBtn  = document.getElementById('refreshBtn');
+    const searchBox   = document.getElementById('searchBox');
+    const limitSelect = document.getElementById('limitSelect');
+
+    // ====== STATE ======
+    let ALL_ROWS = []; // whole dataset newest-first
+    let VIEW_ROWS = []; // filtered/limited
+
+    // ====== HELPERS ======
+    const fmtTS = (val) => {
+      if (!val) return '';
+      if (typeof val === 'string' && /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(val)) return val;
+      try {
+        const d = new Date(val);
+        return d.toLocaleString("ka-GE", { hour12: false });
+      } catch {
+        return String(val);
+      }
+    };
+
+    // NEW: format Date column as YYYY-MM-DD in Asia/Tbilisi
+    const fmtDATE = (val) => {
+      if (!val) return "";
+      // თუ უკვე სტრიქონია ფორმატით YYYY-MM-DD — 그대로 დავაბრუნოთ (ახლანდელი ახალი რიგები ასეთია)
+      if (typeof val === "string" && /^\d{4}-\d{2}-\d{2}$/.test(val)) return val;
+      try {
+        const d = new Date(val);
+        if (isNaN(d)) return String(val);
+        // მივიღოთ ლოკალური (Asia/Tbilisi) კალენდარული თარიღი ზუსტად YYYY-MM-DD ფორმატში
+        return d.toLocaleDateString("en-CA", { timeZone: "Asia/Tbilisi" }); // en-CA => YYYY-MM-DD
+      } catch {
+        return String(val);
+      }
+    };
+
+    const normalize = (x) => (x ?? '').toString().toLowerCase();
+
+    function sortNewestFirst(rows) {
+      return rows.slice().sort((a,b) => {
+        const at = a.timestamp ? new Date(a.timestamp).getTime() : 0;
+        const bt = b.timestamp ? new Date(b.timestamp).getTime() : 0;
+        return bt - at;
+      });
+    }
+
+    function filterRows() {
+      const q = normalize(searchBox.value);
+      let rows = ALL_ROWS.slice();
+
+      if (q) {
+        rows = rows.filter(r => (
+          normalize(r.broker).includes(q) ||
+          normalize(r.trader).includes(q) ||
+          normalize(r.date).includes(q)   ||
+          normalize(r.s1r1).includes(q)   ||
+          normalize(r.s1r2).includes(q)   ||
+          normalize(r.s1r3).includes(q)   ||
+          normalize(r.s1r4).includes(q)   ||
+          normalize(r.s1r5).includes(q)
+        ));
+      }
+
+      const lim = limitSelect.value;
+      if (lim !== 'all') rows = rows.slice(0, Number(lim));
+      VIEW_ROWS = rows;
+    }
+
+    function paintTable() {
+      tbody.innerHTML = '';
+      VIEW_ROWS.forEach((r) => {
+        const idx = ALL_ROWS.indexOf(r) + 1;
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${idx}</td>
+          <td>${r.broker || ''}</td>
+          <td>${r.trader || ''}</td>
+          <td>${fmtDATE(r.date)}</td>
+          <td>${r.s1r1 || ''}</td>
+          <td>${r.s1r2 || ''}</td>
+          <td>${r.s1r3 || ''}</td>
+          <td>${r.s1r4 || ''}</td>
+          <td>${r.s1r5 || ''}</td>
+          <td>${fmtTS(r.timestamp)}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function fetchRows() {
+      const res = await fetch(LIST_URL, { method: "GET" });
+      if (!res.ok) throw new Error('Fetch failed: ' + res.status);
+      const data = await res.json();
+
+      // წინასწარ მოვახდინოთ Date ველის ნორმალიზაცია, რომ ძებნამაც იმუშავოს ტექსტზე
+      const normalized = data.map(r => ({ ...r, date: fmtDATE(r.date) }));
+
+      ALL_ROWS = sortNewestFirst(normalized);
+      filterRows();
+      paintTable();
+    }
+
+    // debounce search input
+    let tmr = null;
+    function debounceFilter() {
+      clearTimeout(tmr);
+      tmr = setTimeout(() => { filterRows(); paintTable(); }, 150);
+    }
+
+    async function tryEnter() {
+      if (pwdInput.value !== ENTER_PWD) {
+        err.style.display = 'block';
+        resultBlock.style.display = 'none';
+        return;
+      }
+      err.style.display = 'none';
+      resultBlock.style.display = 'block';
+      try {
+        await fetchRows();
+      } catch (e) {
+        console.error(e);
+        alert("მონაცემების წამოღება ვერ მოხერხდა. გადაამოწმე Web App access (Anyone) და LIST_URL.");
+      }
+    }
+
+    // ====== EVENTS ======
+    enterBtn.addEventListener('click', tryEnter);
+    pwdInput.addEventListener('keydown', e => { if (e.key === 'Enter') tryEnter(); });
+    refreshBtn.addEventListener('click', fetchRows);
+    searchBox.addEventListener('input', debounceFilter);
+    limitSelect.addEventListener('change', () => { filterRows(); paintTable(); });
+  </script>
+</body>
+</html>

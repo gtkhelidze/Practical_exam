@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="ka">
+<head>
+  <meta charset="UTF-8" />
+  <title>საბროკერო პრაქტიკული ტესტი</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { font-family: "Segoe UI", system-ui, -apple-system, sans-serif; margin: 0; background:#0f172a; color:#e2e8f0; }
+    .wrap { max-width: 980px; margin: 40px auto; padding: 0 16px; }
+    h1, h2, h3 { margin: 0 0 12px; }
+    h1 { font-size: 26px; color:#f8fafc; }
+    h2 { font-size: 20px; color:#f1f5f9; margin-top: 28px; }
+    h3 { font-size: 16px; color:#cbd5e1; }
+    .card { background:#111827; border:1px solid #1f2937; border-radius:14px; padding:18px; margin:16px 0; }
+    .row { display:flex; gap:12px; flex-wrap:wrap; }
+    .row .field { flex:1 1 260px; min-width: 240px; }
+    label.small { font-size:12px; color:#94a3b8; display:block; margin-bottom:6px; }
+
+    input[type="text"], input[type="date"] {
+      width:100%; padding:10px 12px; border-radius:10px; border:1px solid #1f2937; background:#0b1220; color:#e2e8f0; outline:none;
+    }
+    /* calendar icon bright */
+    input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1); }
+
+    table { width:100%; border-collapse: collapse; }
+    th, td { border-bottom:1px solid #1f2937; padding:10px; text-align:left; }
+    th { color:#cbd5e1; font-weight:600; background:#0b1324; position:sticky; top:0; }
+    .yn { text-align:center; }
+    .yn input { transform: scale(1.2); }
+
+    .footer { display:flex; gap:12px; justify-content:flex-end; margin-top: 24px; }
+    button {
+      cursor:pointer; border:none; border-radius:12px; padding:12px 16px; font-weight:600;
+      background:#2563eb; color:white; transition: transform .05s ease, opacity .2s;
+    }
+    button:hover { opacity:.95; }
+    button:active { transform: translateY(1px); }
+
+    .hint { font-size:12px; color:#94a3b8; margin-top:10px; }
+    .badge { display:inline-block; padding:4px 10px; border-radius:999px; font-size:12px; background:#0b1324; color:#a3b6d6; border:1px solid #1f2937; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>ტესტი (პროექტი)</h1>
+
+    <!-- ჰედერი -->
+    <div class="card">
+      <div class="row">
+        <div class="field">
+          <label class="small">საბროკერო კომპანიის დასახელება</label>
+          <input type="text" id="broker" placeholder="მაგ: ABC Capital" />
+        </div>
+        <div class="field">
+          <label class="small">ტრეიდერის სახელი, გვარი</label>
+          <input type="text" id="trader" placeholder="სახელი გვარი" />
+        </div>
+        <div class="field">
+          <label class="small">თარიღი</label>
+          <input type="date" id="date" />
+        </div>
+      </div>
+      <div class="hint">გამსვლელი ქულა: 10 და მეტი.</div>
+    </div>
+
+    <!-- ნაწილი 1 -->
+    <h2>ნაწილი 1: <span class="badge">სულ 5 ქულა</span></h2>
+    <h3>გაეცანით სავაჭრო სისტემის მონაცემებს და პარამეტრებს და გაარკვიეთ, შესაძლებელი იქნება თუ არა შემდეგი განაცხადების გაკეთება:</h3>
+    <div class="card" style="overflow:auto; max-height: 70vh;">
+      <table>
+        <thead>
+          <tr>
+            <th>Bid/Ask</th>
+            <th>Issue</th>
+            <th>Price</th>
+            <th>Quant</th>
+            <th class="yn">კი</th>
+            <th class="yn">არა</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Buy</td><td>AEST</td><td>1.60</td><td>100</td>
+            <td class="yn"><input type="radio" name="s1r1" value="კი" /></td>
+            <td class="yn"><input type="radio" name="s1r1" value="არა" /></td>
+          </tr>
+          <tr>
+            <td>Sell</td><td>AEST</td><td>2.00</td><td>500</td>
+            <td class="yn"><input type="radio" name="s1r2" value="კი" /></td>
+            <td class="yn"><input type="radio" name="s1r2" value="არა" /></td>
+          </tr>
+          <tr>
+            <td>Buy</td><td>AEST</td><td>1.40</td><td>200</td>
+            <td class="yn"><input type="radio" name="s1r3" value="კი" /></td>
+            <td class="yn"><input type="radio" name="s1r3" value="არა" /></td>
+          </tr>
+          <tr>
+            <td>Buy</td><td>AEST</td><td>1.50</td><td>100</td>
+            <td class="yn"><input type="radio" name="s1r4" value="კი" /></td>
+            <td class="yn"><input type="radio" name="s1r4" value="არა" /></td>
+          </tr>
+          <tr>
+            <td>Sell</td><td>AEST</td><td>1.80</td><td>100</td>
+            <td class="yn"><input type="radio" name="s1r5" value="კი" /></td>
+            <td class="yn"><input type="radio" name="s1r5" value="არა" /></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ნაწილი 2 -->
+    <h2>ნაწილი 2: <span class="badge">სულ 6 ქულა</span></h2>
+    <div class="card">
+      <p>ქვემოთ მოცემული გარიგებები დადებული უნდა იყოს მხოლოდ სავაჭრო სესიის საბირჟო მარკეტზე:</p>
+      <ol>
+        <li>თქვენს კლიენტებს შორის დადეთ ერთი გარიგება, გარიგების მოცულობა უნდა შეადგენდეს 10000 აქციას.</li>
+      </ol>
+      <p>ქვემოთ მოცემული გარიგებები თქვენსავე კლიენტებს შორის არ უნდა იყოს დადებული:</p>
+      <ol start="2">
+        <li>თქვენს პირველ კლიენტს შეძენილი უნდა ჰქონდეს 10000 აქცია.</li>
+        <li>თქვენს მეორე კლიენტს გაყიდული უნდა ჰქონდეს 10000 აქცია.</li>
+      </ol>
+    </div>
+
+    <!-- ნაწილი 3 -->
+    <h2>ნაწილი 3: <span class="badge">სულ 4 ქულა</span></h2>
+    <div class="card">
+      <p>გარიგებები დადებული უნდა იყოს მხოლოდ არასაბირჟო სესიის მარკეტზე:</p>
+      <ol>
+        <li>დადეთ ერთი არასაბირჟო გარიგება იმ მარკეტზე რომლითაც მოხდება ანგარიშსწორება დეპოზიტარში.</li>
+        <li>დადეთ ერთი არასაბირჟო გარიგება იმ მარკეტზე რომლითაც არ მოხდება ანგარიშსწორება დეპოზიტარში.</li>
+      </ol>
+
+      <!-- დასრულება ნაწილი 3-ის ქვემოთ -->
+      <div class="footer">
+        <button id="finishBtn">დასრულება</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // შენი ახალი EXEC URL
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxD8krfclWXbBT4NhcB-SZ-8PDeuy9FFphc-KDJ0bTbOyEHkcglS4i0X6lRzpm5kWeD/exec";
+
+    function getSelections() {
+      const pick = name => {
+        const el = document.querySelector(`input[name="${name}"]:checked`);
+        return el ? el.value : '';
+      };
+      return {
+        broker: document.getElementById('broker').value.trim(),
+        trader: document.getElementById('trader').value.trim(),
+        date: document.getElementById('date').value,
+        s1r1: pick('s1r1'),
+        s1r2: pick('s1r2'),
+        s1r3: pick('s1r3'),
+        s1r4: pick('s1r4'),
+        s1r5: pick('s1r5')
+        // timestamp ემატება server-side-ზე
+      };
+    }
+
+    async function saveSubmission(record) {
+      const res = await fetch(SCRIPT_URL, {
+        method: "POST",
+        mode: "no-cors", // CORS fix GitHub/localhost-დან გაგზავნისას
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(record)
+      });
+      return res;
+    }
+
+    function resetAll() {
+      document.getElementById('broker').value = '';
+      document.getElementById('trader').value = '';
+      document.getElementById('date').value = '';
+      ['s1r1','s1r2','s1r3','s1r4','s1r5'].forEach(n=>{
+        const checked = document.querySelector(`input[name="${n}"]:checked`);
+        if (checked) checked.checked = false;
+      });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    document.getElementById('finishBtn').addEventListener('click', async () => {
+      const broker = document.getElementById('broker').value.trim();
+      const trader = document.getElementById('trader').value.trim();
+      const date   = document.getElementById('date').value;
+
+      if(!broker || !trader || !date){
+        alert("გთხოვთ შეავსოთ ყველა სავალდებულო ველი");
+        return;
+      }
+
+      const requiredRadios = ['s1r1','s1r2','s1r3','s1r4','s1r5'];
+      for (const r of requiredRadios) {
+        if(!document.querySelector(`input[name="${r}"]:checked`)){
+          alert("გთხოვთ მონიშნოთ ყველა 5 კითხვა (კი ან არა)");
+          return;
+        }
+      }
+
+      try {
+        await saveSubmission(getSelections());
+        alert("თქვენი მონაცემები გაიგზავნა, გისურვებთ წარმატებებს");
+        resetAll();
+      } catch (e) {
+        console.error(e);
+        alert("ვერ გაიგზავნა. სცადეთ თავიდან (შეამოწმეთ ინტერნეტი/უფლებები).");
+      }
+    });
+  </script>
+</body>
+</html>
